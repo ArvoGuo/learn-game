@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+</head>
+<body onLoad="init()">
+  <canvas id="canvas" width="800" height="400" style="display:block;background-color: #ccc;margin:0 auto;"></canvas>
+</body>
+<script>
+
+  var ctx;
+  var canvas;
+  var rad          =  9;
+  var sx           =  10;
+  var sy           =  10;
+  var balls        = [];
+  var WIDTH        = 800;
+  var HEIGHT       = 400;
+  var TIMEINTERVAL = 10;
+  var G            = 10; // m/s->m/ms
+  function init() {
+    canvas = document.getElementById('canvas');
+    ctx    = canvas.getContext('2d');
+    canvas.addEventListener('mousedown', mouseDown, false);
+    setInterval(drawAll,TIMEINTERVAL);
+
+  }
+  function mouseDown(e) {
+    var x = e.offsetX;
+    var y = e.offsetY;
+    var a = new Ball(x, y);
+    balls.push(a);
+  }
+  function drawAll() {
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+    for (var i = 0, len = balls.length; i < len; i ++) {
+      balls[i].draw().move();
+    }
+  }
+
+  function Ball(x, y, sx, sy) {
+    this.x    = x;
+    this.y    = y;
+    this.maxY = y;
+    this.E    = 0;
+    this.rad  = rad;
+    this.bornTime = (new Date()).getTime() / 1000;
+    this.fillStyle = newColor();
+  }
+
+  Ball.prototype = {
+    draw : function() {
+      ctx.fillStyle = this.fillStyle;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.rad, 0, Math.PI * 2, true);
+      ctx.fill();
+      return this;
+    },
+    move: function() {
+      var nowTime = (new Date()).getTime() / 1000;
+      var t       = nowTime - this.bornTime;
+      this.sy     = G * t;
+      this.y     += this.sy * t;
+      this.E      = 0.5 * Math.pow(this.sy);
+      if (this.y > HEIGHT - rad) {
+        this.y    =  HEIGHT - rad;
+      }
+      return this;
+    }
+  };
+
+
+  function newColor() {
+    var r, g, b;
+    r = random();
+    g = random();
+    b = random();
+    function random() {
+      return Math.floor(Math.random() * (255 - 0)) + 0;
+    }
+    return 'rgb('+ r +',' + g + ',' + b + ')';
+  }
+</script>
+</html>
