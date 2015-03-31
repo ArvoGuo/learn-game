@@ -18,7 +18,9 @@
   var WIDTH        = 800;
   var HEIGHT       = 400;
   var TIMEINTERVAL = 10;
-  var G            = 10; // m/s->m/ms
+  var G            = 10 * 40; // m -> px
+
+  var boundBottom  = HEIGHT - rad;
   function init() {
     canvas = document.getElementById('canvas');
     ctx    = canvas.getContext('2d');
@@ -40,11 +42,15 @@
   }
 
   function Ball(x, y, sx, sy) {
-    this.x    = x;
-    this.y    = y;
-    this.maxY = y;
-    this.E    = 0;
-    this.rad  = rad;
+    this.x     = x;
+    this.y     = y;
+    this.initY = y;
+    this.maxY  = y;
+    this.E     = (boundBottom - this.y) * G;
+    this.v0    = 0;
+    this.vt    = 0;
+    this.g     = G;
+    this.rad   = rad;
     this.bornTime = (new Date()).getTime() / 1000;
     this.fillStyle = newColor();
   }
@@ -60,11 +66,15 @@
     move: function() {
       var nowTime = (new Date()).getTime() / 1000;
       var t       = nowTime - this.bornTime;
-      this.sy     = G * t;
-      this.y     += this.sy * t;
-      this.E      = 0.5 * Math.pow(this.sy);
-      if (this.y > HEIGHT - rad) {
-        this.y    =  HEIGHT - rad;
+      var dis;
+      dis     = this.vt * t - G * 0.5 * t * t;
+      this.y  = this.maxY - dis;
+      if (this.y > boundBottom) {
+        this.bornTime = (new Date()).getTime() / 1000;
+        this.maxY     = boundBottom;
+        this.E        = this.E * 0.9;
+        this.vt       = Math.sqrt(this.E * 2);
+        this.g        = - this.g;
       }
       return this;
     }
