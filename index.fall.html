@@ -2,10 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
   <title>Document</title>
 </head>
+<style>
+  html {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    height: 100%;
+  }
+</style>
 <body onLoad="init()">
-  <canvas id="canvas" width="800" height="400" style="display:block;background-color: #ccc;margin:0 auto;"></canvas>
+  <canvas id="canvas"  style="display:block;background-color: #ccc;margin:0 auto;"></canvas>
 </body>
 <script>
 
@@ -15,15 +25,17 @@
   var sx           =  10;
   var sy           =  10;
   var balls        = [];
-  var WIDTH        = 800;
-  var HEIGHT       = 400;
+  var WIDTH        = document.body.clientWidth;
+  var HEIGHT       = document.body.clientHeight;
   var TIMEINTERVAL = 10;
   var G            = 10 * 40; // m -> px
 
   var boundBottom  = HEIGHT - rad;
   function init() {
     canvas = document.getElementById('canvas');
-    ctx    = canvas.getContext('2d');
+    canvas.width  = WIDTH;
+    canvas.height = HEIGHT;
+    ctx           = canvas.getContext('2d');
     canvas.addEventListener('mousedown', mouseDown, false);
     setInterval(drawAll,TIMEINTERVAL);
 
@@ -64,13 +76,16 @@
       return this;
     },
     move: function() {
-      var nowTime = (new Date()).getTime() / 1000;
+      var nowTime = newTime();
       var t       = nowTime - this.bornTime;
-      var dis;
-      dis     = this.vt * t - G * 0.5 * t * t;
-      this.y  = this.maxY - dis;
+      var disY;
+
+
+      disY     = this.vt * t - G * 0.5 * t * t;
+      this.y  = this.maxY - disY;
+
       if (this.y > boundBottom) {
-        this.bornTime = (new Date()).getTime() / 1000;
+        this.bornTime = newTime();
         this.maxY     = boundBottom;
         this.E        = this.E * 0.9;
         this.vt       = Math.sqrt(this.E * 2);
@@ -79,7 +94,9 @@
       return this;
     }
   };
-
+  function newTime() {
+    return (new Date()).getTime() / 1000;
+  }
 
   function newColor() {
     var r, g, b;
