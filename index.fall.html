@@ -53,6 +53,7 @@
   }
 
   function mouseDown(e) {
+    stopDefault();
     var event = isMobile() ? e.touches[0] : e;
     var x = event.offsetX || event.pageX - (event.target.getBoundingClientRect().left + document.body.scrollTop);
     var y = event.offsetY || event.pageY - (event.target.getBoundingClientRect().top + document.body.scrollTop);
@@ -62,6 +63,7 @@
   }
 
   function mouseMove(e) {
+    stopDefault();
     var event = isMobile() ? e.touches[0] : e;
     var x = event.offsetX || event.pageX - (event.target.getBoundingClientRect().left + document.body.scrollTop);
     var y = event.offsetY || event.pageY - (event.target.getBoundingClientRect().top + document.body.scrollTop);
@@ -69,6 +71,7 @@
   }
 
   function mouseUp() {
+    stopDefault();
     catapult.stopDrag();
     balls.push(new Ball(catapult.x1, catapult.y1, catapult.sBall.x, catapult.sBall.y));
   }
@@ -312,7 +315,7 @@
     return (bIsIpad || bIsIphoneOs || bIsMidp || bIsUc7 || bIsUc || bIsAndroid || bIsCE || bIsWM);
   }
   function stopDefault(e){
-    var e=e || window.event;
+    e = e || window.event;
     if(e.preventDefault){
       e.preventDefault();
     }else{
