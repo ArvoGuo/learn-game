@@ -18,11 +18,10 @@
   <canvas id="canvas"  style="display:block;background-color: #ccc;margin:0 auto;"></canvas>
 </body>
 <script>
-
   var ctx;
   var canvas;
   var scaleN       = 40;
-  var rad          = 19;
+  var rad          = 10;
   var sx           = 10;
   var sy           = 10;
   var balls        = [];
@@ -43,27 +42,33 @@
     canvas.height = HEIGHT;
     ctx           = canvas.getContext('2d');
     catapult     = new Catapult();
-    canvas.addEventListener('mousedown', mouseDown, false);
-    canvas.addEventListener('mousemove', mouseMove, false);
-    canvas.addEventListener('mouseup', mouseUp, false);
+    var touchStart,touchMove,touchEnd;
+    touchStart = isMobile() ? 'touchstart' : 'mousedown';
+    touchMove = isMobile() ? 'touchmove' : 'mousemove';
+    touchEnd = isMobile() ? 'touchend' : 'mouseup';
+    canvas.addEventListener(touchStart, mouseDown, false);
+    canvas.addEventListener(touchMove, mouseMove, false);
+    canvas.addEventListener(touchEnd, mouseUp, false);
     setInterval(drawAll,fps);
-
   }
+
   function mouseDown(e) {
-    var x = e.offsetX;
-    var y = e.offsetY;
+    var event = isMobile() ? e.touches[0] : e;
+    var x = event.offsetX || event.pageX - (event.target.getBoundingClientRect().left + document.body.scrollTop);
+    var y = event.offsetY || event.pageY - (event.target.getBoundingClientRect().top + document.body.scrollTop);
     catapult.setStart(x, y);
     // var a = new Ball(x, y , 0, 0);
     // balls.push(a);
   }
 
   function mouseMove(e) {
-    var x = e.offsetX;
-    var y = e.offsetY;
+    var event = isMobile() ? e.touches[0] : e;
+    var x = event.offsetX || event.pageX - (event.target.getBoundingClientRect().left + document.body.scrollTop);
+    var y = event.offsetY || event.pageY - (event.target.getBoundingClientRect().top + document.body.scrollTop);
     catapult.setEnd(x, y);
   }
 
-  function mouseUp(e) {
+  function mouseUp() {
     catapult.stopDrag();
     balls.push(new Ball(catapult.x1, catapult.y1, catapult.sBall.x, catapult.sBall.y));
   }
@@ -292,6 +297,27 @@
       return Math.floor(Math.random() * (255 - 0)) + 0;
     }
     return 'rgb('+ r +',' + g + ',' + b + ')';
+  }
+  function isMobile(){
+    var sUserAgent= navigator.userAgent.toLowerCase(),
+    bIsIpad= sUserAgent.match(/ipad/i) == "ipad",
+    bIsIphoneOs= sUserAgent.match(/iphone os/i) == "iphone os",
+    bIsMidp= sUserAgent.match(/midp/i) == "midp",
+    bIsUc7= sUserAgent.match(/rv:1.2.3.4/i) == "rv:1.2.3.4",
+    bIsUc= sUserAgent.match(/ucweb/i) == "ucweb",
+    bIsAndroid= sUserAgent.match(/android/i) == "android",
+    bIsCE= sUserAgent.match(/windows ce/i) == "windows ce",
+    bIsWM= sUserAgent.match(/windows mobile/i) == "windows mobile",
+    bIsWebview = sUserAgent.match(/webview/i) == "webview";
+    return (bIsIpad || bIsIphoneOs || bIsMidp || bIsUc7 || bIsUc || bIsAndroid || bIsCE || bIsWM);
+  }
+  function stopDefault(e){
+    var e=e || window.event;
+    if(e.preventDefault){
+      e.preventDefault();
+    }else{
+      e.returnValue=false;
+    }
   }
 </script>
 </html>
