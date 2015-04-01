@@ -21,56 +21,140 @@
 
   var ctx;
   var canvas;
-  var rad          =  19;
-  var sx           =  10;
-  var sy           =  10;
+  var scaleN       = 40;
+  var rad          = 19;
+  var sx           = 10;
+  var sy           = 10;
   var balls        = [];
   var WIDTH        = document.body.clientWidth;
   var HEIGHT       = document.body.clientHeight;
   var fps          = 10;
-  var G            = 10 * 40; // m -> px
+  var G            = 10 * scaleN; // m -> px
   var frictionX    = 0.9;
   var frictionY    = 0.9;
   var boundBottom  = HEIGHT - rad;
   var boundLeft    = rad;
   var boundRight   = WIDTH  - rad;
   var boundTop     = rad;
+  var catapult;
   function init() {
     canvas = document.getElementById('canvas');
     canvas.width  = WIDTH;
     canvas.height = HEIGHT;
     ctx           = canvas.getContext('2d');
+    catapult     = new Catapult();
     canvas.addEventListener('mousedown', mouseDown, false);
+    canvas.addEventListener('mousemove', mouseMove, false);
+    canvas.addEventListener('mouseup', mouseUp, false);
     setInterval(drawAll,fps);
 
   }
   function mouseDown(e) {
     var x = e.offsetX;
     var y = e.offsetY;
-    var a = new Ball(x, y);
-    balls.push(a);
+    catapult.setStart(x, y);
+    // var a = new Ball(x, y , 0, 0);
+    // balls.push(a);
+  }
+
+  function mouseMove(e) {
+    var x = e.offsetX;
+    var y = e.offsetY;
+    catapult.setEnd(x, y);
+  }
+
+  function mouseUp(e) {
+    catapult.stopDrag();
+    balls.push(new Ball(catapult.x1, catapult.y1, catapult.sBall.x, catapult.sBall.y));
+  }
+
+  function clearAll() {
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
   }
   function drawAll() {
-    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+    clearAll();
     for (var i = 0, len = balls.length; i < len; i ++) {
       balls[i].draw().move();
     }
+    catapult.draw().move();
   }
 
-  function Ball(x, y, sx) {
+  function Catapult() {
+    this.dragStatus  = false;
+    this.x1          = 0;
+    this.x2          = 0;
+    this.y1          = 0;
+    this.y2          = 0;
+    this.sx          = 20;
+    this.sBall = {
+        x: 0,
+        y: 0
+    };
+    this.strokeStyle = newColor();
+  }
+
+  Catapult.prototype = {
+    draw: function() {
+      ctx.strokeStyle = this.strokeStyle;
+      ctx.lineWidth   = 2;
+      ctx.beginPath();
+      ctx.moveTo(this.x1, this.y1);
+      ctx.lineTo(this.x2, this.y2);
+      ctx.stroke();
+      return this;
+    },
+    move: function () {
+      if (!this.dragStatus) {
+        if (abs(this.x2 - this.x1) < this.sx) {
+          this.x1 = this.x2 = this.y1 = this.y2 = 0;
+          return;
+        }
+        var angle = abs(this.y2 - this.y1) / abs(this.x2 - this.x1);
+        var newX  = (this.x2 > this.x1 ? - this.sx : this.sx) + this.x2;
+        var tempY = angle * abs(newX - this.x1);
+        var newY  = (this.y2 > this.y1 ? tempY : - tempY) + this.y1;
+        this.x2 = newX;
+        this.y2 = newY;
+      }
+      return this;
+    },
+    setStart: function(x, y) {
+      clearAll();
+      this.dragStatus  = true;
+      this.x1 = x;
+      this.y1 = y;
+      this.x2 = x;
+      this.y2 = y;
+    },
+    setEnd  : function(x, y) {
+      if (!this.dragStatus) {
+        return;
+      }
+      this.x2    = x;
+      this.y2    = y;
+      this.sBall = {
+        x: (this.x1 - this.x2) * 0.1,
+        y: - (this.y1 - this.y2) * 0.1
+      };
+    },
+    stopDrag: function() {
+      this.dragStatus = false;
+    }
+  };
+
+  function Ball(x, y, sx, v) {
     this.run   = true;
     this.x     = x;
     this.y     = y;
-    this.sx    = -3;
+    this.sx    = sx;
     this.initY = y;
     this.maxY  = y;
-    this.v0    = 0;
-    this.vt    = -800;
+    this.v     = v * scaleN;
     this.g     = G;
     this.rad   = rad;
     this.bornTime = (new Date()).getTime() / 1000;
     this.EX    = 0.5 * this.sx * this.sx;
-    this.EY    = (boundBottom - this.y) * G + 0.5 * this.vt * this.vt;
+    this.EY    = (boundBottom - this.y) * G + 0.5 * this.v * this.v;
     this.fillStyle = newColor();
   }
 
@@ -92,7 +176,7 @@
       var nowTime = newTime();
       var t       = nowTime - this.bornTime;
       var disY;
-      disY      = this.vt * t - G * 0.5 * t * t;
+      disY      = this.v * t - G * 0.5 * t * t;
       this.oldY = this.y;
       this.oldX = this.x;
       this.y    = this.maxY - disY;
@@ -113,7 +197,7 @@
         this.maxY     = boundBottom;
         this.sx = this.sx * 0.999;
         this.reduceY();
-        this.vt       = this.getVbyE(this.EY);
+        this.v       = this.getVbyE(this.EY);
         this.g        = - G;
       }
       if (this.y < boundTop) {
@@ -121,7 +205,7 @@
         this.maxY     = boundTop;
         this.sx = this.sx * 0.999;
         this.reduceY();
-        this.vt       = - this.getVbyE(this.EY);
+        this.v       = - this.getVbyE(this.EY);
         this.g        = G;
       }
       return this;
@@ -187,9 +271,16 @@
   function pow(x) {
     return Math.pow(x,2);
   }
+  function abs(x) {
+    return Math.abs(x);
+  }
 
   function newTime() {
     return (new Date()).getTime() / 1000;
+  }
+
+  function getC(a, b) {
+    return Math.sqrt(pow(a) + pow(b));
   }
 
   function newColor() {
