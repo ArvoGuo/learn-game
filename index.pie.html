@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+</head>
+<body>
+  <canvas id='d' style="background:rgba(0,0,0,0.1)"></canvas>
+</body>
+<script>
+  var result = {
+    preFont: '¥',
+    center: {
+      name:'营业额',
+      value: '123123',
+      other: '(1000单)'
+    },
+    data: [
+      {name: '在线金额支付', value: '1200.00'},
+      {name: '现金支付金额', value: '1500.00'},
+      {name: '优惠补贴', value: '2000.00'},
+      {name: '优惠补贴', value: '2000.00'},
+      {name: '优惠补贴', value: '2000.00'},
+    ]
+  };
+
+  var element = document.getElementById('d');
+  var ctx = element.getContext('2d');
+  var W = 500;
+  var H = 400;
+  var LINEWIDTH = 30;
+  var LABELANGLE = 25; //标签角度
+  var LABELWIDTH = 1;  //标签线宽
+  var STARTANGLE = 270;
+  var center = {
+    x: W/2,
+    y: H/2
+  };
+  var radius = W / 2 * 0.4;
+  var rad =  Math.PI / 180;
+  element.width = W;
+  element.height= H;
+
+  var Color = {
+    green:  '#62c880',
+    blue :  '#437fed',
+    orange: '#fc863f',
+    red: '#e34e36'
+  };
+  var ColorArray = [
+    '#62c880',
+    '#437fed',
+    '#fc863f',
+    '#e34e36'
+  ];
+
+  var series = result.data;
+  var seriesCenter = result.center;
+
+  var total = (function() {
+    var t = 0;
+    result.data.forEach(function(i) {
+      t += parseInt(i.value);
+    });
+    return t ;
+  })(series);
+
+  var pie = [];
+  series.forEach(function(item) {
+    var angle = 0;
+    var lastPie = pie[pie.length - 1] || {end: 0};
+    var lastEnd = lastPie.end ? lastPie.end : 270;
+    angle = parseInt(item.value) / total * 360;
+
+    pie.push({
+      start: lastEnd,
+      end: lastEnd + angle,
+      data: item
+    });
+  });
+  for (var i = 0, len = pie.length; i < len; i ++) {
+    drawCircle(ctx, ColorArray[i], pie[i].start, pie[i].end, pie[i].data);
+  }
+
+  drawCenter(ctx, seriesCenter);
+
+  function drawCircle(ctx, color, start, end, data) {
+    ctx.beginPath();
+    ctx.lineWidth = LINEWIDTH;
+    ctx.strokeStyle = color;
+    ctx.arc(center.x, center.y, radius, start * rad , end * rad, false);
+    ctx.stroke();
+    drawLabel(ctx, color, start, end, data);
+    return ctx;
+  }
+  function drawLabel(ctx, color, start, end, data) {
+
+    var _x2 = 28, _y2 = 50; //turn
+    var _x3 = 100, _y3 = 0;  // horizontal
+    var _x4 = 0,  _y4 = 30; //word
+    var _x5 = 0,  _y5 = 20;
+    var _r = ( LABELANGLE + start) * rad;
+    var point = {
+      x : center.x + (radius) * Math.cos(_r),
+      y : center.y + (radius) * Math.sin(_r)
+    };
+    var point2, point3, point4, point5;
+    point2 = getPoint(point, _x2, _y2);
+    point3 = getPoint(point2, _x3, _y3);
+    if (point3.y > center.y) {
+      _y4 = -_y4;
+    }
+    point4 = getPoint(point3, _x4, _y4);
+    if (point4.x >  center.x){
+      point4.x = point2.x;
+    } else {
+      point4.x -= 0;
+    }
+    if (point4.y < center.y) {
+      _y5 = -_y5;
+    }
+    point5 = getPoint(point4, _x5, _y5);
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = LABELWIDTH;
+    ctx.moveTo(point.x, point.y);
+    ctx.lineTo(point2.x, point2.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(point2.x, point2.y);
+    ctx.lineTo(point3.x, point3.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.font = 'normal normal 600 19px arial';
+    ctx.fillText(result.preFont + data.value ,point4.x, point4.y);
+    ctx.font = 'normal normal 100 16px 微软雅黑';
+    ctx.fillText( data.name ,point5.x, point5.y);
+
+    function getPoint(point, _x , _y) {
+      if (point.x > center.x && point.y > center.y) {
+        //1
+        _x = _x;
+        _y = _y;
+      }
+      if (point.x > center.x && point.y < center.y) {
+        //2
+        _x = _x;
+        _y = -_y;
+      }
+      if (point.x < center.x && point.y > center.y) {
+        //3
+        _x = -_x;
+        _y = _y;
+      }
+      if (point.x < center.x && point.y < center.y) {
+        //4
+        _x = -_x;
+        _y = -_y;
+      }
+      return {
+        x: point.x + _x,
+        y: point.y + _y
+      };
+    }
+  }
+  function drawCenter(ctx, data) {
+    var y1 = 25;
+    var y2 = 10;
+    var y3 = 30;
+    ctx.textAlign="center";
+    ctx.fillStyle = '#000';
+    ctx.font = 'normal normal 100 18px 微软雅黑';
+    ctx.fillText(data.name,center.x, center.y - y1);
+    ctx.fillStyle = Color.red;
+    ctx.font = 'normal normal bold 26px arial';
+    ctx.fillText(result.preFont + data.value,center.x, center.y + y2);
+    ctx.fillStyle = '#000';
+    ctx.font = 'normal normal 100 14px arial';
+    ctx.fillText(data.other,center.x, center.y + y3);
+  }
+</script>
+</html>
